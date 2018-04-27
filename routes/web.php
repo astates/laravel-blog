@@ -17,4 +17,7 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/', 'PagesController@getIndex');
+Route::get('/posts', 'PagesController@getPosts');
+Route::get('/edit-posts', 'PagesController@getEditPosts');
+Route::get('/create-post', 'PagesController@getCreatePost');
