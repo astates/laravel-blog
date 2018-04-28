@@ -52,6 +52,12 @@
                                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                   <ul style="">
                                     <li>
+                                      <a class="dropdown-item" href="/posts/create">Create Post</a>
+                                    </li>
+                                    <li>
+                                      <a class="dropdown-item" href="/posts/{{ Auth::user()->id }}">Edit Current Posts</a>
+                                    </li>
+                                    <li>
                                       <a class="dropdown-item" href="{{ route('logout') }}"
                                          onclick="event.preventDefault();
                                                        document.getElementById('logout-form').submit();">
@@ -61,9 +67,7 @@
                                           @csrf
                                       </form>
                                     </li>
-                                    <li>
-                                      <a class="dropdown-item" href="/edit-posts">Create/Edit Posts</a>
-                                    </li>
+
                                   </ul>
 
 
@@ -74,9 +78,15 @@
                     </ul>
                 </div>
             </div>
+
         </nav>
 
         <main class="py-4">
+          <div style="text-align:center; display:block; width:100%; padding:20px; color:red;">
+            @if($errors->any())
+            <h4>{{$errors->first()}}</h4>
+            @endif
+          </div>
             @yield('content')
         </main>
     </div>

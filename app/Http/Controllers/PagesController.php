@@ -21,28 +21,9 @@ class PagesController extends Controller
     /**
     * Home Page
     */
-    public function getIndex() {
-      return view('pages.index');
+    public function getHomePage() {
+      return view('pages.homepage');
     }
 
-    /**
-    * Posts Page
-    */
-    public function getPosts() {
-      return view('pages.posts');
-    }
-
-    /**
-    * Backend Edit Posts Page
-    */
-    public function getEditPosts() {
-      return view('pages.edit-posts');
-    }
-
-    /**
-    * Backend Create Posts Page
-    */
-    public function getCreatePost() {
-      return view('pages.create-post');
-    }
+    
 }

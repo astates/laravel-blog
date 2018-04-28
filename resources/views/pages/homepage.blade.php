@@ -9,11 +9,12 @@
                 <div class="card-header">Welcome!</div>
 
                 <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success">
-                            {{ session('status') }}
-                        </div>
-                    @endif
+                    @guest
+                    <p>Please sign in to create or edit your posts.</p>
+                    @else
+                    <p>Welcome {{ Auth::user()->name }},</p>
+                    @endguest
+                    <p>This is the homepage, please click <a href="/posts">here</a> to see all blog posts.</p>
 
                 </div>
             </div>
