@@ -1,109 +1,122 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Auth;
-use Illuminate\Http\Request;
-
-use App\Http\Controllers\Controller;
-use App\Http\Requests;
+use Session;
+use Redirect;
 use App\Post;
 use App\User;
-use Session;
 use Carbon\Carbon;
-use Redirect;
+use App\Http\Requests;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class PostsController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display all posts
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-      // Fetch data in pagination so only 10 posts per page
-      // To get all data you may use get() method
+      // Return all post data and user data related to each post
       $posts = Post::with('user')->get();
 
       return view('pages.posts', ['posts' => $posts]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Method for creating new post
      *
      * @return \Illuminate\Http\Response
      */
     public function create()
     {
-
-        return view('pages.create-post');
+      // Send user back with a note that they shouldn't be there if they arent logged in
+      if( !Auth::check() ) {
+        return Redirect::back()->withErrors(['You are not logged in and cannot access this.']);
+      }
+      return view('pages.create-post');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store new posts
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
+      // Send user back with a note that they shouldn't be there if they arent logged in
+      if( !Auth::check() ) {
+        return Redirect::back()->withErrors(['You are not logged in and cannot access this.']);
+      }
 
       // Validate and filter user inputted data
-        $this->validate($request, [
-            'post_title'        => 'required',
-            'post_slug'         => 'required|alpha_dash|max:200|unique:posts,post_slug',
-            'post_content'      => 'required',
-        ]);
+      $this->validate($request, [
+          'post_title'        => 'required',
+          'post_slug'         => 'required|alpha_dash|max:200|unique:posts,post_slug',
+          'post_content'      => 'required',
+      ]);
 
-        // Create a new Post Model initialization
-        $post = new Post;
+      // Create a new Post Model initialization
+      $post = new Post;
 
-        $post->author_ID      = Auth::user()->id;
-        $post->post_title     = $request->post_title;
-        $post->post_slug      = $request->post_slug;
-        $post->post_content   = $request->post_content;
+      $post->author_ID      = Auth::user()->id;
+      $post->post_title     = $request->post_title;
+      $post->post_slug      = $request->post_slug;
+      $post->post_content   = $request->post_content;
 
-        $post->save();
+      $post->save();
 
-        // Store data for only a single request and destory
-        Session::flash( 'sucess', 'Post published.' );
-
-        // Redirect to `posts.show` route
-        // Use route:list to view the `Action` or where this routes going to
-        return redirect()->route('posts.show', Auth::user()->id);
+      // Redirect to page with all of this users post's
+      return redirect()->route('posts.show', Auth::user()->id);
     }
 
     /**
-     * Display the specified resource.
+     * Show all posts for this user
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
+      $user = [];
+      $userId = '';
+      $posts = '';
+
+      // Determine if user is logged in, assign value to variable
+      if(Auth::check())
+      {
+        $userId = Auth::user()->id;
+      } else {
+        $userId = '';
+      }
+
+      // Fetch all of this user's posts data
       $posts = Post::with('user')
       ->where( 'author_ID', $id )
       ->get();
 
       if($posts->isEmpty()) {
-        return Redirect::back()->withErrors(['This User does not exist']);
+        return Redirect::back()->withErrors(['This User does not exist, or they have not created any posts yet.']);
       }
 
-        $user = [];
-      if( Auth::user()->id == $id ) {
+      // If user is logged in and requesting their posts, set variable so
+      // they can edit post on that view.
+      if($userId == $id ) {
         $user['isUser'] = true;
       }else {
         $user['isUser'] = false;
         $user['name'] = $posts[0]->user->name;
       }
 
-
-        return view('pages.show', [ 'posts' => $posts, 'user' => $user ]);
+      return view('pages.show', [ 'posts' => $posts, 'user' => $user ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Method for editing existing post.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
@@ -113,14 +126,14 @@ class PostsController extends Controller
       $post = Post::findOrFail( $id );
 
       if( Auth::user()->id != $post->author_ID ) {
-        return Redirect::back()->withErrors(['You tried to access Something you shouldn\'t...']);
-        //return redirect('/')->with('flash_message', 'You tried to access Something you shouldn\'t...');
+        return Redirect::back()->withErrors(['You\'re not allowed to edit someone elses post.']);
       }
+
       return view('pages.edit-posts', [ 'post' => $post ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update post from edit method
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -136,18 +149,17 @@ class PostsController extends Controller
 
       $post = Post::findOrFail($id);
 
-      $post->post_title       = $request->input('post_title');
-      $post->post_slug        = $request->input('post_slug');
-      $post->post_content     = $request->input('post_content');
+      $post->post_title   = $request->input('post_title');
+      $post->post_slug    = $request->input('post_slug');
+      $post->post_content = $request->input('post_content');
 
       $post->save();
 
-      Session::flash('success', 'Post updated.');
-        return view('pages.show', [ 'post' => $post ]);
+      return view('pages.show', [ 'post' => $post ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete post method and redirect back to users posts
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
@@ -158,8 +170,6 @@ class PostsController extends Controller
 
       $post->delete();
 
-      Session::flash('success', 'Post deleted.');
-
-      return redirect()->route('posts.index');
+      return redirect()->route('posts.show', Auth::user()->id);
     }
 }

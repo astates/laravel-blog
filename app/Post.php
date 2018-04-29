@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-
   protected $dates = ['updated_at'];
 
   // Get the user data the owns the post
@@ -21,5 +20,4 @@ class Post extends Model
   {
     return (new Carbon($value))->format('M-d-Y');
   }
-
 }

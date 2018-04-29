@@ -10,11 +10,8 @@
 |
 */
 Route::get('/', function () {
-
-    return view('pages.homepage');
+  return view('pages.homepage');
 });
-
-
 
 Route::resource('posts', 'PostsController');
 
